@@ -13,7 +13,8 @@ import { getPoolers } from './utils/pooler/getPoolers.js'
 
 const app: Express = express();
 const port = process.env.PORT || 8000;
-let walletsToWatch: `0x${string}`[] | undefined = undefined
+let walletsToWatch: `0x${string}`[] | undefined = ['0x9eA825d445836e458d2c15359571AB86659363E6']
+let unwatch: (() => void) | undefined;
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server");
@@ -21,10 +22,55 @@ app.get("/", (req: Request, res: Response) => {
 
 const watchWallets = async() => {
   const _walletsToWatch = await getPoolers()!
+  if (_walletsToWatch?.length === 0) {
+    walletsToWatch = ['0x9eA825d445836e458d2c15359571AB86659363E6']
+    return
+  }
   if (JSON.stringify(walletsToWatch) !== JSON.stringify(_walletsToWatch)) {
     walletsToWatch = _walletsToWatch
-    startEventWatcher()
+    startEventWatcher();
     console.log('Updated wallets to watch:', walletsToWatch);
+  }
+}
+const PoolDepositSendEmail = async (log: any, index: number) => {
+  try {
+    const to = log.args.to
+    if (to == '0x9eA825d445836e458d2c15359571AB86659363E6') return;
+    const from = log.args.from
+    const amount = log.args.value
+    if (amount! === BigInt(0)) return;
+    console.log(`doing log ${index}`)
+    console.log(log)
+    //get user from pta db
+    const pooler = await getPooler(to!)
+
+    //ckeck log info for address mathcing one from PTA db
+    //if match send winning info to db and send email
+    
+    //swap and deposit for winner
+    const poolDepositTx = await smartUserDepositOP(
+      amount!,
+      to!
+    )
+    console.log(poolDepositTx)
+    //send email
+    console.log(pooler?.email)
+    const amountPrzUSDC = formatUnits(amount!, 6)
+    if (poolDepositTx) {
+      await sendEmail(pooler?.email!, pooler?.ens!, Number(amountPrzUSDC).toFixed(2))
+      //post reward info to susu.club DB
+      await postPoolerDeposit(to!, from!, poolDepositTx!, Number(amountPrzUSDC).toFixed(2), 'deposit')
+    }
+  } catch (error) {
+    console.log(error)
+  }
+  
+}
+const loopLogs = async(logs: any) => {
+  for (let i = 0; i < logs.length; i++) {
+    const log = logs[i];
+    
+    await PoolDepositSendEmail(log, i)
   }
 }
 
@@ -35,8 +81,14 @@ const startEventWatcher = async() => {
     console.error('No wallets to watch. Exiting.');
     return;
   }
-  
-  const unwatch = watchContractEvent(config, {
+
+  // Unwatch previous events if already watching
+  if (unwatch) {
+    unwatch();
+    console.log("Stopped previous event watcher");
+  }
+
+  unwatch = watchContractEvent(config, {
     abi: erc20Abi,
     chainId: 8453,
     address: USDC,
@@ -45,40 +97,8 @@ const startEventWatcher = async() => {
       to: walletsToWatch //static AA wallet address
     },
     onLogs(logs) {
-      console.log('Logs changed!', logs)
-      //loop logs async
-      const loopLogs = async() => {
-        for (let i = 0; i < logs.length; i++) {
-          const log = logs[i];
-          console.log(`doing log ${i}`)
-          const to = log.args.to
-          const from = log.args.from
-          const amount = log.args.value
-          const PoolDepositSendEmail = async () => {
-            //get user from pta db
-            const pooler = await getPooler(to!)
-  
-            //ckeck log info for address mathcing one from PTA db
-            //if match send winning info to db and send email
-            
-            //swap and deposit for winner
-            const poolDepositTx = await smartUserDepositOP(
-                amount!,
-                to!
-            )
-            console.log(poolDepositTx)
-            //send email
-            console.log(pooler?.email)
-            const amountPrzUSDC = formatUnits(amount!, 6)
-            await sendEmail(pooler?.email!, pooler?.ens!, Number(amountPrzUSDC).toFixed(2))
-            //post reward info to susu.club DB
-            await postPoolerDeposit(to!, from!, poolDepositTx!, Number(amountPrzUSDC).toFixed(2), 'reward')
-            
-          }
-          //await PoolDepositSendEmail()
-        }
-      }
-      //loopLogs()
+      //loop logs
+      loopLogs(logs)
     },
     onError(err) {
       console.log('err found!', err)
@@ -90,10 +110,12 @@ const startEventWatcher = async() => {
 };
 
 
-app.listen(port, async() => {
+
+app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
-  startEventWatcher()
   createSmartAccount()
   watchWallets();
   setInterval(watchWallets, 3000);
 });
+
+

@@ -4,6 +4,10 @@ import dotenv from 'dotenv'
 import { config } from '../wagmi/config.js';
 import { simulateContract } from '@wagmi/core';
 import { deposit } from '../deposit/deposit.js';
+import { przUSDC } from '../constants/addresses.js';
+import { allowanceUSD } from '../deposit/allowance.js';
+import { approveLifeTimeSwim } from '../deposit/approve.js';
+import { transfer } from '../deposit/transfer.js';
 
 
 dotenv.config();
@@ -30,33 +34,46 @@ export const createSmartAccount = async () => {
     }
 };
 
+const poolDeposit = async(amount: bigint, pooler: `0x${string}`) => {
+    let tx = []
+    const transferTx = transfer(pooler, smartAccountAddress!, amount)
+    tx.push(transferTx)
+    
+    const usdcForDepositAllowance = await allowanceUSD(smartAccountAddress!, przUSDC)   
+    if (amount > usdcForDepositAllowance || usdcForDepositAllowance == BigInt(0)) {
+        const lifetimeSwimTx = approveLifeTimeSwim(przUSDC)
+        tx.push(lifetimeSwimTx)
+    }
+    
+    const depositPrzTx = deposit(amount, pooler)
+    tx.push(depositPrzTx)
+
+    // Send the transaction and get the transaction hash
+    const userOpResponse = await smartAccount!.sendTransaction(tx, {
+        paymasterServiceData: {mode: PaymasterMode.SPONSORED},
+    });
+    const { transactionHash } = await userOpResponse.waitForTxHash();
+    console.log("Transaction Hash", transactionHash);
+    
+    const userOpReceipt  = await userOpResponse?.wait();
+    if(userOpReceipt?.success == 'true') { 
+        console.log("UserOp receipt", userOpReceipt)
+        console.log("Transaction receipt", userOpReceipt?.receipt)
+    }
+    return transactionHash
+}
+
 export const smartUserDepositOP = async(amount: bigint, pooler: `0x${string}`) => {
 
     try {
         if (amount > BigInt(0)) {
-            let txnHash
+            
 
             await createSmartAccount()
 
-            const poolDeposit = async() => {
-
-                const depositPrzTx = deposit(amount, pooler)
-
-                // Send the transaction and get the transaction hash
-                const userOpResponse = await smartAccount!.sendTransaction(depositPrzTx, {
-                    paymasterServiceData: {mode: PaymasterMode.SPONSORED},
-                });
-                const { transactionHash } = await userOpResponse.waitForTxHash();
-                console.log("Transaction Hash", transactionHash);
-                txnHash = transactionHash
-                const userOpReceipt  = await userOpResponse?.wait();
-                if(userOpReceipt?.success == 'true') { 
-                    console.log("UserOp receipt", userOpReceipt)
-                    console.log("Transaction receipt", userOpReceipt?.receipt)
-                }
-            }
-            await poolDeposit()
-            return  txnHash 
+            
+            const txnHash = await poolDeposit(amount, pooler)
+            return txnHash
             }
     } catch (error) {
         console.log(error)
