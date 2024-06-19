@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import { config } from '../wagmi/config.js';
 import { simulateContract } from '@wagmi/core';
 import { deposit } from '../deposit/deposit.js';
-import { przUSDC } from '../constants/addresses.js';
+import { suPrzUSDC } from '../constants/addresses.js';
 import { allowanceUSD } from '../deposit/allowance.js';
 import { approveLifeTimeSwim } from '../deposit/approve.js';
 import { transfer } from '../deposit/transfer.js';
@@ -39,9 +39,9 @@ const poolDeposit = async(amount: bigint, pooler: `0x${string}`) => {
     const transferTx = transfer(pooler, smartAccountAddress!, amount)
     tx.push(transferTx)
     
-    const usdcForDepositAllowance = await allowanceUSD(smartAccountAddress!, przUSDC)   
+    const usdcForDepositAllowance = await allowanceUSD(smartAccountAddress!, suPrzUSDC)   
     if (amount > usdcForDepositAllowance || usdcForDepositAllowance == BigInt(0)) {
-        const lifetimeSwimTx = approveLifeTimeSwim(przUSDC)
+        const lifetimeSwimTx = approveLifeTimeSwim(suPrzUSDC)
         tx.push(lifetimeSwimTx)
     }
     

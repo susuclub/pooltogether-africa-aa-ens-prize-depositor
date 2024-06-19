@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from 'express'
 import { config } from './utils/wagmi/config.js'
 import { watchContractEvent } from '@wagmi/core'
 import { createSmartAccount, smartUserDepositOP } from './utils/biconomy/smartUserOP.js'
-import { Recipient, USDC } from './utils/constants/addresses.js'
+import { USDC, przDepositBot } from './utils/constants/addresses.js'
 import { erc20Abi, formatUnits } from 'viem'
 import { getPooler } from './utils/pooler/getPooler.js'
 import { postPoolerDeposit } from './utils/pooler/postPoolerDeposit.js'
@@ -13,7 +13,7 @@ import { getPoolers } from './utils/pooler/getPoolers.js'
 
 const app: Express = express();
 const port = process.env.PORT || 8000;
-let walletsToWatch: `0x${string}`[] | undefined = ['0x9eA825d445836e458d2c15359571AB86659363E6']
+let walletsToWatch: `0x${string}`[] | undefined = [przDepositBot]
 let unwatch: (() => void) | undefined;
 
 app.get("/", (req: Request, res: Response) => {
@@ -23,7 +23,7 @@ app.get("/", (req: Request, res: Response) => {
 const watchWallets = async() => {
   const _walletsToWatch = await getPoolers()!
   if (_walletsToWatch?.length === 0) {
-    walletsToWatch = ['0x9eA825d445836e458d2c15359571AB86659363E6']
+    walletsToWatch = [przDepositBot]
     return
   }
   if (JSON.stringify(walletsToWatch) !== JSON.stringify(_walletsToWatch)) {
@@ -35,7 +35,7 @@ const watchWallets = async() => {
 const PoolDepositSendEmail = async (log: any, index: number) => {
   try {
     const to = log.args.to
-    if (to == '0x9eA825d445836e458d2c15359571AB86659363E6') return;
+    if (to == przDepositBot) return;
     const from = log.args.from
     const amount = log.args.value
     if (amount! === BigInt(0)) return;
