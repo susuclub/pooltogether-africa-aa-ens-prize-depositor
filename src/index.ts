@@ -21,15 +21,19 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 const watchWallets = async() => {
-  const _walletsToWatch = await getPoolers()!
-  if (_walletsToWatch?.length === 0) {
-    walletsToWatch = [przDepositBot]
-    return
-  }
-  if (JSON.stringify(walletsToWatch) !== JSON.stringify(_walletsToWatch)) {
-    walletsToWatch = _walletsToWatch
-    startEventWatcher();
-    console.log('Updated wallets to watch:', walletsToWatch);
+  try {
+    const _walletsToWatch = await getPoolers()!
+    if (_walletsToWatch?.length === 0) {
+      walletsToWatch = [przDepositBot]
+      return
+    }
+    if (JSON.stringify(walletsToWatch) !== JSON.stringify(_walletsToWatch)) {
+      walletsToWatch = _walletsToWatch
+      startEventWatcher();
+      console.log('Updated wallets to watch:', walletsToWatch);
+    }
+  } catch (error) {
+    console.log(error)
   }
 }
 const PoolDepositSendEmail = async (log: any, index: number) => {
@@ -115,7 +119,7 @@ app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
   createSmartAccount()
   watchWallets();
-  setInterval(watchWallets, 3000);
+  setInterval(watchWallets, 6660);
 });
 
 
