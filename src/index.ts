@@ -2,7 +2,7 @@ import express, { Express, Request, Response } from 'express'
 import { config } from './utils/wagmi/config.js'
 import { watchContractEvent } from '@wagmi/core'
 import { createSmartAccount, smartUserDepositOP } from './utils/biconomy/smartUserOP.js'
-import { USDC, przDepositBot } from './utils/constants/addresses.js'
+import { USDC, przDepositBot, suPrzUSDC } from './utils/constants/addresses.js'
 import { erc20Abi, formatUnits } from 'viem'
 import { getPooler } from './utils/pooler/getPooler.js'
 import { postPoolerDeposit } from './utils/pooler/postPoolerDeposit.js'
@@ -39,8 +39,11 @@ const watchWallets = async() => {
 const PoolDepositSendEmail = async (log: any, index: number) => {
   try {
     const to = log.args.to
-    if (to == przDepositBot) return;
+    if (to.toLowerCase() == przDepositBot.toLowerCase()) return;
+
     const from = log.args.from
+    if (from.toLowerCase() == suPrzUSDC.toLowerCase()) return;
+
     const amount = log.args.value
     if (amount! === BigInt(0)) return;
     console.log(`doing log ${index}`)
@@ -68,7 +71,6 @@ const PoolDepositSendEmail = async (log: any, index: number) => {
   } catch (error) {
     console.log(error)
   }
-  
 }
 const loopLogs = async(logs: any) => {
   for (let i = 0; i < logs.length; i++) {

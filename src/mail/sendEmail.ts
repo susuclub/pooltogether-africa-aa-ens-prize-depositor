@@ -22,8 +22,8 @@ export const sendEmail = async(email: string, ens: string, amount: string) => {
             subject: 'susu club deposit',
             html: `
               <p>Dear ${ens},</p>
-              <p>Your deposit ${amount} has been credited to your account. You have grat saving habits!!</p>
-              <p>You dont have to do anything, kindly check your balance when you have a second. stay safe!</p>
+              <p>Your deposit ${amount} has been credited to your account. You have great saving habits!!</p>
+              <p>You dont have to do anything, kindly check your balance when you have a second. Stay safe!</p>
             `,
         };
         await transporter.sendMail(rewardEmail);

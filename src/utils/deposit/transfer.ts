@@ -1,6 +1,6 @@
 import { encodeFunctionData } from 'viem';
-import { erc20ABI, vaultABI } from '@generationsoftware/hyperstructure-client-js';
-import { USDC, suPrzUSDC } from '../constants/addresses.js';
+import { erc20ABI } from '@generationsoftware/hyperstructure-client-js';
+import { USDC } from '../constants/addresses.js';
 
 export const transfer = (from: `0x${string}`, to: `0x${string}`, amount: bigint ) => {
     const transferData = encodeFunctionData({
