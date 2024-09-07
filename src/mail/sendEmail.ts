@@ -16,17 +16,23 @@ export const sendEmail = async(email: string, ens: string, amount: string) => {
             },
         });
     
-        const rewardEmail = {
-            from: `Deposit @ susu.club <${process.env.USER}>`,
+        const depositEmail = {
+            from: `Deposits @ susu.club <${process.env.USER}>`,
             to: email, // Dynamic recipient email address
             subject: 'susu club deposit',
             html: `
-              <p>Dear ${ens},</p>
-              <p>Your deposit ${amount} has been credited to your account. You have great saving habits!!</p>
-              <p>You dont have to do anything, kindly check your balance when you have a second. Stay safe!</p>
+                <p>Dear ${ens},</p>
+
+                <p>We’re excited to inform you that your recent deposit of <strong>$${amount}</strong> has been successfully credited to your Susu Box. You're doing an amazing job with your savings!</p>
+
+                <p>There's nothing more you need to do at this time. When it's convenient, feel free to check your updated balance in your account.</p>
+
+                <p>Thank you for your continued trust, and as always, stay safe and keep up the great savings!</p>
+
+                <p>Warm regards,<br/>susu.club</p>
             `,
         };
-        await transporter.sendMail(rewardEmail);
+        await transporter.sendMail(depositEmail);
     } catch (error) {
         console.log(error)
     }
