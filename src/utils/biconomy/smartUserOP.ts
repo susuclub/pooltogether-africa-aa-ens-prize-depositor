@@ -59,8 +59,9 @@ const poolDeposit = async(amount: bigint, pooler: `0x${string}`) => {
     if(userOpReceipt?.success == 'true') { 
         console.log("UserOp receipt", userOpReceipt)
         console.log("Transaction receipt", userOpReceipt?.receipt)
+        return transactionHash
     }
-    return transactionHash
+    
 }
 
 export const smartUserDepositOP = async(amount: bigint, pooler: `0x${string}`) => {
