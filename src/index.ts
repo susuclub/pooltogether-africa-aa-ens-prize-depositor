@@ -121,7 +121,7 @@ app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
   createSmartAccount()
   watchWallets();
-  setInterval(watchWallets, 6660);
+  setInterval(watchWallets, 66600);
 });
 
 
