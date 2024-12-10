@@ -2,7 +2,7 @@ import { Pooler } from "./getPooler"
 
 export const getPoolers = async ()=>{
     try {
-        const res = await fetch('https://susu.club/api/getPoolers', {
+        const res = await fetch('https://pooltogether-africa-aa-ens-rouge.vercel.app/api/getPoolers', {
             method: 'POST',
             headers: {
                 'Content-type': 'application/json',
